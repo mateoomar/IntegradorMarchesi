@@ -1,22 +1,17 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '4.0.0'
-	id 'io.spring.dependency-management' version '1.1.7'
+	// Cambiamos a la versión estable de Spring Boot
+	id 'org.springframework.boot' version '3.2.0'
+	id 'io.spring.dependency-management' version '1.1.4'
+	id 'jacoco'
 }
 
 group = 'org.example'
 version = '0.0.1-SNAPSHOT'
-description = 'Demo project for Spring Boot'
 
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(17)
-	}
-}
-
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
 	}
 }
 
@@ -25,18 +20,34 @@ repositories {
 }
 
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-	compileOnly 'org.projectlombok:lombok'
+	// Versión de SpringDoc compatible con 3.2.0
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
 	runtimeOnly 'com.h2database:h2'
+	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// Testing
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testCompileOnly 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
-tasks.named('test') {
+test {
 	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+}
+
+jacoco {
+	toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = true
+		html.required = true
+	}
 }
