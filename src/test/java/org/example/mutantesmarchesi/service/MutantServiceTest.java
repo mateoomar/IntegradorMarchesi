@@ -19,12 +19,15 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class MutantServiceTest {
 
+    // Mock del Detector de Mutantes, simula la lógica del algoritmo
     @Mock
     private MutantDetector mutantDetector;
 
+    // Mock del Repositorio, simula la interacción con la Base de Datos (Persistencia)
     @Mock
     private DnaRecordRepository dnaRecordRepository;
 
+    // Inyecta los Mocks en el Servicio que queremos probar
     @InjectMocks
     private MutantService mutantService;
 
@@ -33,13 +36,16 @@ class MutantServiceTest {
     void testAnalyzeMutantDnaAndSave() {
         String[] dna = {"ATGCGA", "CAGTGC", "TTATGT", "AGAAGG", "CCCCTA", "TCACTG"};
 
-        when(dnaRecordRepository.findByDnaHash(anyString())).thenReturn(Optional.empty());
-        when(mutantDetector.isMutant(dna)).thenReturn(true);
+        // Configuración de Mocks:
+        when(dnaRecordRepository.findByDnaHash(anyString())).thenReturn(Optional.empty()); // No cacheado
+        when(mutantDetector.isMutant(dna)).thenReturn(true); // Es mutante
 
+        // Act
         boolean result = mutantService.analyzeDna(dna);
 
+        // Assert:
         assertTrue(result);
-        verify(dnaRecordRepository, times(1)).save(any(DnaRecord.class));
+        verify(dnaRecordRepository, times(1)).save(any(DnaRecord.class)); // Se debe guardar
     }
 
     @Test
@@ -49,12 +55,15 @@ class MutantServiceTest {
         DnaRecord existingRecord = new DnaRecord();
         existingRecord.setMutant(true);
 
-        when(dnaRecordRepository.findByDnaHash(anyString())).thenReturn(Optional.of(existingRecord));
+        // Configuración de Mocks:
+        when(dnaRecordRepository.findByDnaHash(anyString())).thenReturn(Optional.of(existingRecord)); // Está cacheado
 
+        // Act
         boolean result = mutantService.analyzeDna(dna);
 
+        // Assert:
         assertTrue(result);
-        // Verificar que NO se llamó al detector ni a save (ahorro de recursos)
+        // Verificar que NO se llamó al detector ni a save (ahorro de recursos - Dedup)
         verify(mutantDetector, never()).isMutant(any());
         verify(dnaRecordRepository, never()).save(any());
     }
@@ -63,5 +72,18 @@ class MutantServiceTest {
     @DisplayName("Debe lanzar InvalidDnaException si el ADN es nulo (Defensive Programming)")
     void testShouldThrowExceptionWhenDnaIsNull() {
         assertThrows(InvalidDnaException.class, () -> mutantService.analyzeDna(null));
+    }
+    @Test
+    @DisplayName("Debe analizar ADN humano, guardarlo como 'false' y retornar false")
+    void testAnalyzeHumanDnaAndSave() {
+        String[] dna = {"ATGCGA", "CAGTGC", "TTATGT", "AGAAGG", "CGCCTA", "TCACTG"};
+
+        when(dnaRecordRepository.findByDnaHash(anyString())).thenReturn(Optional.empty());
+        when(mutantDetector.isMutant(dna)).thenReturn(false);
+        boolean result = mutantService.analyzeDna(dna);
+        assertFalse(result);
+        verify(dnaRecordRepository, times(1)).save(any(DnaRecord.class));
+        verify(dnaRecordRepository).save(argThat(record -> !record.isMutant()));
+        verify(dnaRecordRepository, times(1)).save(any());
     }
 }
