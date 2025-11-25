@@ -6,7 +6,7 @@
 [![Build Tool](https://img.shields.io/badge/Build%20Tool-Gradle-blue.svg)](https://gradle.org/)
 
 Link Repositorio GitHub: [https://github.com/mateoomar/IntegradorMarchesi.git](https://github.com/mateoomar/IntegradorMarchesi.git)
-Link API Desplegada (Render): [**REEMPLAZAR_AQUÍ** con la URL de tu API en Render]
+Link API Desplegada (Render): https://integradormarchesi.onrender.com
 
 [cite_start]API REST que detecta si un humano es mutante basándose en su secuencia de ADN[cite: 3].
 
